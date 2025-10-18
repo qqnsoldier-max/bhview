@@ -91,6 +91,11 @@ const StyledButton = styled.button`
     box-shadow: none;
   }
 
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.focus}, inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
   ${({ theme, size }) => {
     const sizes = buttonSizes(theme);
     return sizes[size] || sizes.md;

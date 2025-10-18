@@ -60,6 +60,11 @@ const StyledIconButton = styled.button`
     opacity: 0.4;
     cursor: not-allowed;
   }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.focus}, inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
 `;
 
 export const IconButton = forwardRef(({ variant = "ghost", size = "sm", children, ...props }, ref) => (
