@@ -1,5 +1,5 @@
-import { useState } from "react";
-import styled from "styled-components";
+import { useMemo, useState } from "react";
+import styled, { useTheme } from "styled-components";
 import {
   Button,
   IconButton,
@@ -14,26 +14,8 @@ import {
   Toggle,
   Badge,
   StatBlock,
-  uiTokens,
 } from "../components/ui";
-
-const mutedColor = uiTokens?.colors?.neutral400 || "#94A3B8";
-const valueColor = uiTokens?.colors?.neutral200 || "#E1E8F0";
-
-const collectColorEntries = (source, prefix = []) => {
-  if (!source) return [];
-  return Object.entries(source).flatMap(([key, value]) => {
-    if (typeof value === "string") {
-      return [{ name: [...prefix, key].join("."), value }];
-    }
-    if (value && typeof value === "object") {
-      return collectColorEntries(value, [...prefix, key]);
-    }
-    return [];
-  });
-};
-
-const colorSwatches = collectColorEntries(uiTokens?.colors);
+import { useThemePicker } from "../theme/ThemeContext";
 
 // UiGallery surfaces UI primitives so designers and engineers can regression-check states quickly.
 const Page = styled.div`
@@ -52,7 +34,7 @@ const H = styled.h2`
   font-size: 0.95rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: ${mutedColor};
+  color: ${({ theme }) => theme.colors.text.tertiary};
 `;
 
 const Row = styled.div`
@@ -79,8 +61,8 @@ const Swatch = styled.div`
   grid-template-columns: 48px 1fr;
   gap: 12px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: ${({ theme }) => theme.colors.backgrounds.soft};
+  border: 1px solid ${({ theme }) => theme.colors.border.subtle};
   border-radius: 12px;
   padding: 8px 12px;
 `;
@@ -97,17 +79,52 @@ const Label = styled.div`
   display: grid;
   gap: 4px;
   font-size: 12px;
-  color: ${mutedColor};
+  color: ${({ theme }) => theme.colors.text.tertiary};
   span.value {
-    color: ${valueColor};
+    color: ${({ theme }) => theme.colors.text.secondary};
   }
+`;
+
+const EmptySwatchNotice = styled.span`
+  color: ${({ theme }) => theme.colors.text.tertiary};
+`;
+
+const PlaceholderCopy = styled.p`
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.tertiary};
 `;
 
 export default function UiGallery() {
   const [checked, setChecked] = useState(true);
+  const theme = useTheme();
+  const { paletteName, setPalette, options } = useThemePicker();
+
+  const colorSwatches = useMemo(() => collectColorEntries(theme?.colors), [theme]);
+
+  const currentLabel = options.find((option) => option.value === paletteName)?.label ?? paletteName;
 
   return (
     <Page>
+      <Section>
+        <H>Theme</H>
+        <Row>
+          <Select
+            id="theme-picker"
+            label="Palette"
+            value={paletteName}
+            onChange={(event) => setPalette(event.target.value)}
+            style={{ minWidth: 220 }}
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+          <Badge variant="accent">{currentLabel}</Badge>
+        </Row>
+      </Section>
+
       <Section>
         <H>Buttons</H>
         <Row>
@@ -223,7 +240,7 @@ export default function UiGallery() {
               </Button>
             </CardHeader>
             <CardBody>
-              <div style={{ height: 160, borderRadius: 12, background: "rgba(255, 255, 255, 0.04)" }} />
+              <PlaceholderCard />
             </CardBody>
           </Card>
 
@@ -232,9 +249,9 @@ export default function UiGallery() {
               <CardTitle>Simple Card</CardTitle>
             </CardHeader>
             <CardBody>
-              <p style={{ margin: 0, color: mutedColor }}>
+              <PlaceholderCopy>
                 Use Card, CardHeader, CardTitle, CardSubtitle, and CardBody to compose.
-              </p>
+              </PlaceholderCopy>
             </CardBody>
           </Card>
         </Grid>
@@ -264,10 +281,37 @@ export default function UiGallery() {
               </Swatch>
             ))
           ) : (
-            <span style={{ color: mutedColor }}>Add uiTokens.colors to show swatches</span>
+            <EmptySwatchNotice>Add palette colors to show swatches</EmptySwatchNotice>
           )}
         </SwatchGrid>
       </Section>
     </Page>
   );
+}
+
+const PlaceholderCard = styled.div`
+  height: 160px;
+  border-radius: 12px;
+  background: ${({ theme }) => theme.gradients.primarySoft};
+  box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.border.subtle};
+`;
+
+function collectColorEntries(colors, prefix = []) {
+  if (!colors || typeof colors !== "object") {
+    return [];
+  }
+
+  return Object.entries(colors).flatMap(([key, value]) => {
+    const path = [...prefix, key];
+
+    if (typeof value === "string") {
+      return [{ name: path.join("."), value }];
+    }
+
+    if (value && typeof value === "object") {
+      return collectColorEntries(value, path);
+    }
+
+    return [];
+  });
 }

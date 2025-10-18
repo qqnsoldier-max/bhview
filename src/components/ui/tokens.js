@@ -1,32 +1,29 @@
-// Base palette tuned for high-contrast finance dashboards.
-const baseColors = {
-  background: "#050B1A",
-  backgroundSoft: "#0A1226",
-  surface: "#11172A",
-  surfaceElevated: "#1C243A",
-  surfaceInverted: "#FFFFFF",
-  primary: "#3F8CFF",
-  primaryHover: "#5FA2FF",
-  primaryMuted: "#1E3B69",
-  accent: "#00D1B2",
-  accentHover: "#33E5C8",
-  success: "#3BCF7C",
-  warning: "#FFB347",
-  danger: "#FF5A5F",
-  neutral50: "#F1F5F9",
-  neutral100: "#E2E8F0",
-  neutral200: "#CBD5F5",
-  neutral300: "#A8B2CF",
-  neutral400: "#94A3B8",
-  neutral500: "#7B8AB0",
-  neutral600: "#64748B",
-  neutral700: "#4B5565",
-  neutral800: "#334155",
-  neutral900: "#1E293B",
+import { defaultPalette, getPalette } from "../../theme/palettes";
+
+// Converts hex values into rgba strings so palette choices propagate to translucent tokens.
+export const toRgba = (hex, alpha) => {
+  if (!hex) {
+    return `rgba(0, 0, 0, ${alpha})`;
+  }
+
+  const normalized = hex.replace("#", "");
+  const expanded =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : normalized;
+
+  const bigint = Number.parseInt(expanded, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// Extended map adds semantic groupings while preserving direct color keys.
-export const colors = {
+const buildColorTokens = (baseColors) => ({
   ...baseColors,
   text: {
     primary: baseColors.neutral50,
@@ -41,13 +38,13 @@ export const colors = {
     soft: baseColors.backgroundSoft,
     surface: baseColors.surface,
     elevated: baseColors.surfaceElevated,
-    overlay: "rgba(5, 11, 26, 0.72)",
+    overlay: toRgba(baseColors.background, 0.72),
   },
   border: {
-    subtle: "rgba(255, 255, 255, 0.08)",
-    default: "rgba(255, 255, 255, 0.12)",
-    accent: "rgba(63, 140, 255, 0.4)",
-    danger: "rgba(255, 90, 95, 0.4)",
+    subtle: toRgba(baseColors.surfaceInverted, 0.08),
+    default: toRgba(baseColors.surfaceInverted, 0.12),
+    accent: toRgba(baseColors.primary, 0.4),
+    danger: toRgba(baseColors.danger, 0.4),
   },
   status: {
     success: baseColors.success,
@@ -55,16 +52,20 @@ export const colors = {
     danger: baseColors.danger,
     info: baseColors.primary,
   },
-  focus: "rgba(63, 140, 255, 0.22)",
-};
+  focus: toRgba(baseColors.primary, 0.22),
+});
 
-// Gradient tokens drive hero surfaces and accent fills.
-export const gradients = {
-  primary: `linear-gradient(135deg, ${baseColors.primary}, ${baseColors.primaryHover})`,
-  primarySoft: `linear-gradient(160deg, rgba(63, 140, 255, 0.18), rgba(95, 162, 255, 0.12))`,
-  accent: `linear-gradient(140deg, ${baseColors.accent}, ${baseColors.accentHover})`,
-  danger: `linear-gradient(135deg, ${baseColors.danger}, #ff767b)`,
-  glass: "linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04))",
+const buildGradientTokens = (baseColors) => {
+  const primaryHover = baseColors.primaryHover || baseColors.primary;
+  const accentHover = baseColors.accentHover || baseColors.accent;
+
+  return {
+    primary: `linear-gradient(135deg, ${baseColors.primary}, ${primaryHover})`,
+    primarySoft: `linear-gradient(160deg, ${toRgba(baseColors.primary, 0.18)}, ${toRgba(primaryHover, 0.12)})`,
+    accent: `linear-gradient(140deg, ${baseColors.accent}, ${accentHover})`,
+    danger: `linear-gradient(135deg, ${baseColors.danger}, ${toRgba(baseColors.danger, 0.68)})`,
+    glass: "linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04))",
+  };
 };
 
 // Rounded corners ensure consistency across surfaces and controls.
@@ -160,3 +161,30 @@ export const transitions = {
   fast: "all 120ms ease",
   slow: "all 260ms ease",
 };
+
+export const createTokenTheme = (paletteName = defaultPalette) => {
+  const baseColors = getPalette(paletteName);
+
+  return {
+    paletteName,
+    colors: buildColorTokens(baseColors),
+    gradients: buildGradientTokens(baseColors),
+    radii,
+    spacing,
+    typography,
+    shadows,
+    transitions,
+    elevations,
+    zIndices,
+    opacity,
+    layout,
+  };
+};
+
+const defaultTokens = createTokenTheme();
+
+// Maintain direct exports for backwards compatibility with existing imports.
+export const colors = defaultTokens.colors;
+export const gradients = defaultTokens.gradients;
+
+export default defaultTokens;

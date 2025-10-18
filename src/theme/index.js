@@ -1,32 +1,5 @@
 import { createGlobalStyle } from "styled-components";
-import {
-  colors,
-  gradients,
-  radii,
-  spacing,
-  typography,
-  shadows,
-  transitions,
-  elevations,
-  zIndices,
-  opacity,
-  layout,
-} from "../components/ui/tokens";
-
-// Public theme contract consumed by styled-components' ThemeProvider.
-export const theme = {
-  colors,
-  gradients,
-  radii,
-  spacing,
-  typography,
-  shadows,
-  transitions,
-  elevations,
-  zIndices,
-  opacity,
-  layout,
-};
+import { radii, typography, toRgba } from "../components/ui/tokens";
 
 // GlobalStyle locks in the dark gradient baseline and resets key elements.
 export const GlobalStyle = createGlobalStyle`
@@ -43,14 +16,14 @@ export const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     min-height: 100vh;
-    background: radial-gradient(circle at 20% 18%, rgba(63, 140, 255, 0.25), transparent 55%),
-      radial-gradient(circle at 80% -10%, rgba(0, 209, 178, 0.18), transparent 50%),
-      ${({ theme }) => theme.colors.background};
+    background: ${({ theme }) => `
+      linear-gradient(180deg, ${toRgba(theme.colors.surfaceInverted, 0.04)} 0%, transparent 55%),
+      ${theme.colors.backgrounds.app}
+    `};
     font-family: ${typography.fontFamily};
     color: ${({ theme }) => theme.colors.text.primary};
     line-height: ${typography.lineHeights.normal};
     overflow-x: hidden;
-    background-attachment: fixed;
   }
 
   #root {
@@ -74,8 +47,8 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   ::selection {
-    background: rgba(63, 140, 255, 0.35);
-    color: ${colors.background};
+    background: ${({ theme }) => toRgba(theme.colors.primary, 0.35)};
+    color: ${({ theme }) => theme.colors.backgrounds.app};
   }
 
   :focus-visible {
@@ -89,7 +62,7 @@ export const GlobalStyle = createGlobalStyle`
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.04);
+    background: ${({ theme }) => toRgba(theme.colors.surfaceInverted, 0.04)};
   }
 
   ::-webkit-scrollbar-thumb {
