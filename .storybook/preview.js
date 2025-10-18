@@ -20,11 +20,19 @@ export const parameters = {
 };
 
 // Wrap stories with the production theme to ensure visual parity.
-export const decorators = [
-  (Story) => (
+// eslint-disable-next-line no-unused-vars -- Story is rendered within the JSX body.
+const withTheme = (Story) => (
     <ThemeProvider theme={theme}>
       <GlobalStyle />
-      {Story()}
+      <Story />
     </ThemeProvider>
-  ),
-];
+);
+
+export const decorators = [withTheme];
+
+const preview = {
+  parameters,
+  decorators,
+};
+
+export default preview;
